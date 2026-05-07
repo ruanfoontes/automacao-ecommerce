@@ -29,8 +29,13 @@ for order in dados["results"]:
     item = order["order_items"][0]
 
     produto = item["item"]["title"]
+    sku = item["item"]["seller_sku"]
     quantidade = item["quantity"]
+
     valor_total = order["total_amount"]
+    taxa_ml = item["sale_fee"]
+
+    lucro_bruto = valor_total - taxa_ml
 
     quantidade_vendas_ml += 1
     faturamento_ml += valor_total
@@ -39,39 +44,72 @@ for order in dados["results"]:
         "Plataforma": "Mercado Livre",
         "Pedido": order["id"],
         "Produto": produto,
-        "SKU": item["item"]["seller_sku"],
+        "SKU": sku,
         "Quantidade": quantidade,
         "Valor Total": valor_total,
+        "Taxa ML": taxa_ml,
+        "Lucro Bruto": lucro_bruto,
         "Cliente": order["buyer"]["nickname"],
         "Status": order["status"]
     })
 
     # MÉTRICAS DOS PRODUTOS
     if produto not in produtos:
+
         produtos[produto] = {
+            "SKU": sku,
             "Quantidade Vendida": 0,
-            "Faturamento": 0
+            "Faturamento": 0,
+            "Taxa ML": 0,
+            "Lucro Bruto": 0
         }
 
     produtos[produto]["Quantidade Vendida"] += quantidade
     produtos[produto]["Faturamento"] += valor_total
+    produtos[produto]["Taxa ML"] += taxa_ml
+    produtos[produto]["Lucro Bruto"] += lucro_bruto
 
+# =========================
 # DATAFRAME PEDIDOS
+# =========================
+
 df_pedidos = pd.DataFrame(pedidos)
 
+# =========================
 # DATAFRAME PRODUTOS
+# =========================
+
 lista_produtos = []
 
 for produto, dados_produto in produtos.items():
+
+    ticket_medio = (
+        dados_produto["Faturamento"]
+        / dados_produto["Quantidade Vendida"]
+    )
+
     lista_produtos.append({
         "Produto": produto,
+        "SKU": dados_produto["SKU"],
         "Quantidade Vendida": dados_produto["Quantidade Vendida"],
-        "Faturamento": dados_produto["Faturamento"]
+        "Faturamento": dados_produto["Faturamento"],
+        "Taxa ML": dados_produto["Taxa ML"],
+        "Lucro Bruto": dados_produto["Lucro Bruto"],
+        "Ticket Médio": round(ticket_medio, 2)
     })
 
 df_produtos = pd.DataFrame(lista_produtos)
 
+# ORDENAR MAIS VENDIDOS
+df_produtos = df_produtos.sort_values(
+    by="Quantidade Vendida",
+    ascending=False
+)
+
+# =========================
 # RESUMO PLATAFORMA
+# =========================
+
 df_resumo = pd.DataFrame([
     {
         "Plataforma": "Mercado Livre",
@@ -80,7 +118,10 @@ df_resumo = pd.DataFrame([
     }
 ])
 
+# =========================
 # EXPORTAR EXCEL
+# =========================
+
 with pd.ExcelWriter("relatorio_ecommerce.xlsx") as writer:
 
     df_resumo.to_excel(
@@ -101,4 +142,4 @@ with pd.ExcelWriter("relatorio_ecommerce.xlsx") as writer:
         index=False
     )
 
-print("\nRelatório gerado com sucesso!")
+print("\nRelatório profissional gerado!")
