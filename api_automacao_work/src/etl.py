@@ -1,6 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
+import pandas as pd
 
 load_dotenv()
 
@@ -46,3 +47,11 @@ def buscar_dados():
         })
 
     return pd.DataFrame(lista)
+
+def exportar_excel(df):
+    caminho = "reports/vendas.xlsx"
+
+    with pd.ExcelWriter(caminho, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Produtos", index=False)
+
+    return caminho 
