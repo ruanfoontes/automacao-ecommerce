@@ -22,58 +22,43 @@ def buscar_dados():
     response = requests.get(url, headers=headers)
     dados = response.json()
 
-    produtos = {}
+    vendas = []
 
     for order in dados.get("results", []):
         try:
-            item = order["order_items"][0]
+            data_raw = order.get("date_created")
 
-            produto = item["item"]["title"]
-            quantidade = item["quantity"]
-            valor_total = order["total_amount"]
+            if not data_raw:
+                continue
 
-            # 📅 pega data do pedido
-            data = order.get("date_created", "")
-            data_obj = datetime.fromisoformat(data.replace("Z", ""))
+            # converte data real da API
+            data_obj = datetime.fromisoformat(data_raw.replace("Z", ""))
 
-            dia = data_obj.date()
-            mes = data_obj.month
-            ano = data_obj.year
+            # filtro: desde 01/01/2022
+            if data_obj.year < 2022:
+                continue
 
-            if produto not in produtos:
-                produtos[produto] = {
-                    "Quantidade": 0,
-                    "Faturamento": 0,
-                    "Dia": dia,
-                    "Mes": mes,
-                    "Ano": ano
-                }
+            data_br = data_obj.strftime("%d/%m/%Y")
 
-            produtos[produto]["Quantidade"] += quantidade
-            produtos[produto]["Faturamento"] += valor_total
+            vendas.append({
+                "Data": data_br,
+                "Ano": data_obj.year,
+                "Mes": data_obj.month,
+                "Dia": data_obj.day,
+                "Faturamento": float(order.get("total_amount", 0)),
+                "Pedido": order.get("id")
+            })
 
         except:
             continue
 
-    lista = []
-
-    for p, d in produtos.items():
-        lista.append({
-            "Produto": p,
-            "Quantidade": d["Quantidade"],
-            "Faturamento": d["Faturamento"],
-            "Dia": d["Dia"],
-            "Mes": d["Mes"],
-            "Ano": d["Ano"]
-        })
-
-    return pd.DataFrame(lista)
+    return pd.DataFrame(vendas)
 
 
 def exportar_excel(df):
     caminho = "reports/vendas.xlsx"
 
     with pd.ExcelWriter(caminho, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Vendas", index=False)
+        df.to_excel(writer, index=False)
 
     return caminho

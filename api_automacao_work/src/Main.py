@@ -3,70 +3,53 @@ from etl import buscar_dados, exportar_excel
 
 st.set_page_config(page_title="Dashboard Ecommerce", layout="wide")
 
-st.title("📊 Dashboard Mercado Livre - Análise Temporal")
+st.title("📊 Dashboard Mercado Livre - Real")
 
 df = buscar_dados()
 
-#SEGURANÇA 
-if df.empty or not {"Dia", "Mes", "Ano"}.issubset(df.columns):
-    st.warning("Dados insuficientes para análise temporal")
-    st.stop()
-
+# 🔐 segurança
 if df.empty:
     st.warning("Nenhum dado encontrado")
     st.stop()
 
-st.dataframe(df)
-
-# =========================
-# MÉTRICAS GERAIS
-# =========================
+# ======================
+# MÉTRICAS REAIS
+# ======================
 col1, col2 = st.columns(2)
 
-col1.metric("Total Vendas", len(df))
-col2.metric("Faturamento Total", f"R$ {df['Faturamento'].sum():.2f}")
+col1.metric("Total Pedidos", df["Pedido"].nunique())
+col2.metric("Faturamento Real", f"R$ {df['Faturamento'].sum():.2f}")
 
-# =========================
-# 📅 POR DIA
-# =========================
-st.subheader("📅 Faturamento por Dia")
+st.dataframe(df)
 
-dia = df.groupby("Dia")["Faturamento"].sum()
-st.line_chart(dia)
+# ======================
+# 📅 FILTRO VISUAL BR
+# ======================
+st.subheader("📊 Faturamento por Data")
 
-# =========================
-# 📆 POR MÊS
-# =========================
-st.subheader("📆 Faturamento por Mês")
+grafico = df.groupby("Data")["Faturamento"].sum()
+st.line_chart(grafico)
 
-mes = df.groupby("Mes")["Faturamento"].sum()
-st.bar_chart(mes)
+# ======================
+# 📆 MÊS / ANO REAL
+# ======================
+st.subheader("📆 Por Mês")
 
-# =========================
-# 🗓 POR ANO
-# =========================
-st.subheader("🗓 Faturamento por Ano")
+st.bar_chart(df.groupby("Mes")["Faturamento"].sum())
 
-ano = df.groupby("Ano")["Faturamento"].sum()
-st.bar_chart(ano)
+st.subheader("🗓 Por Ano (2022 até hoje)")
 
-# =========================
-# 🧾 ITENS VENDIDOS
-# =========================
-st.subheader("📦 Produtos mais vendidos")
+st.bar_chart(df.groupby("Ano")["Faturamento"].sum())
 
-prod = df.groupby("Produto")["Quantidade"].sum().sort_values(ascending=False).head(10)
-st.bar_chart(prod)
-
-# =========================
-# EXCEL
-# =========================
+# ======================
+# EXCEL REAL
+# ======================
 arquivo = exportar_excel(df)
 
 with open(arquivo, "rb") as file:
     st.download_button(
         "📥 Baixar Excel",
         file,
-        file_name="vendas.xlsx",
+        file_name="vendas_reais.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
