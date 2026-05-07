@@ -1,23 +1,26 @@
 from dotenv import load_dotenv
 import os
-import webbrowser
+import requests
 
 load_dotenv()
 
 APP_ID = os.getenv("APP_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
-redirect_uri = "https://google.com"
+CODE = "TG-69fc9d3853fabf0001f3cc0a-3120483679"
 
-auth_url = (
-    f"https://auth.mercadolivre.com.br/authorization"
-    f"?response_type=code"
-    f"&client_id={APP_ID}"
-    f"&redirect_uri={redirect_uri}"
-)
+url = "https://api.mercadolibre.com/oauth/token"
 
-print("Abrindo navegador...")
+payload = {
+    "grant_type": "authorization_code",
+    "client_id": APP_ID,
+    "client_secret": CLIENT_SECRET,
+    "code": CODE,
+    "redirect_uri": "https://google.com"
+}
 
-webbrowser.open(auth_url)
+response = requests.post(url, data=payload)
 
-print("\nSe não abrir automaticamente:")
-print(auth_url)
+dados = response.json()
+
+print(dados)
