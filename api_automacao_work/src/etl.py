@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import streamlit as st
 
+
 def buscar_dados():
     ACCESS_TOKEN = st.secrets["ACCESS_TOKEN"]
     USER_ID = st.secrets["USER_ID"]
@@ -19,25 +20,40 @@ def buscar_dados():
     produtos = {}
 
     for order in dados.get("results", []):
-        item = order["order_items"][0]
+        try:
+            item = order["order_items"][0]
 
-        produto = item["item"]["title"]
-        quantidade = item["quantity"]
-        valor_total = order["total_amount"]
+            produto = item["item"]["title"]
+            quantidade = item["quantity"]
+            valor_total = order["total_amount"]
 
-        if produto not in produtos:
-            produtos[produto] = {"Quantidade": 0, "Faturamento": 0}
+            plataforma = order.get("payments", [{}])[0].get("payment_type", "Desconhecida")
 
-        produtos[produto]["Quantidade"] += quantidade
-        produtos[produto]["Faturamento"] += valor_total
+            key = (produto, plataforma)
 
-    lista = []
+            if key not in produtos:
+                produtos[key] = {
+                    "Produto": produto,
+                    "Plataforma": plataforma,
+                    "Quantidade": 0,
+                    "Faturamento": 0
+                }
 
-    for p, d in produtos.items():
-        lista.append({
-            "Produto": p,
-            "Quantidade": d["Quantidade"],
-            "Faturamento": d["Faturamento"]
-        })
+            produtos[key]["Quantidade"] += quantidade
+            produtos[key]["Faturamento"] += valor_total
 
-    return pd.DataFrame(lista)
+        except:
+            continue
+
+    return pd.DataFrame(list(produtos.values()))
+
+
+def exportar_excel(df):
+    os.makedirs("reports", exist_ok=True)
+
+    caminho = "reports/vendas.xlsx"
+
+    with pd.ExcelWriter(caminho, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Vendas")
+
+    return caminho
