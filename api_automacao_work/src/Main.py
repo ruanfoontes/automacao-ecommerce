@@ -1,5 +1,4 @@
 import streamlit as st
-from etl import buscar_dados
 from etl import buscar_dados, exportar_excel
 
 st.set_page_config(page_title="Dashboard Ecommerce", layout="wide")
@@ -8,8 +7,10 @@ st.title("📊 Dashboard Mercado Livre")
 
 df = buscar_dados()
 
-if "Faturamento" not in df.columns:
-    df["Faturamento"] = 0
+# segurança
+if df.empty:
+    st.warning("Nenhum dado retornado da API")
+    st.stop()
 
 col1, col2 = st.columns(2)
 
@@ -18,11 +19,10 @@ col2.metric("Faturamento Total", f"R$ {df['Faturamento'].sum():.2f}")
 
 st.dataframe(df)
 
-st.bar_chart(df.set_index("Produto")["Quantidade"])
+# gráfico seguro
+if "Produto" in df.columns and "Quantidade" in df.columns:
+    st.bar_chart(df.set_index("Produto")["Quantidade"])
 
-df = buscar_dados()
-
-#Exportar automaticamente
+# Excel
 arquivo = exportar_excel(df)
-
-st.success(f"Excel gerado: {arquivo}")
+st.success("Excel gerado com sucesso!")
