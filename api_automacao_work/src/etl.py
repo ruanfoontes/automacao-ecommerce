@@ -17,7 +17,7 @@ def buscar_dados():
     response = requests.get(url, headers=headers)
     dados = response.json()
 
-    produtos = {}
+    lista = []
 
     for order in dados.get("results", []):
         try:
@@ -27,33 +27,25 @@ def buscar_dados():
             quantidade = item["quantity"]
             valor_total = order["total_amount"]
 
-            plataforma = order.get("payments", [{}])[0].get("payment_type", "Desconhecida")
+            # 📅 DATA DO PEDIDO
+            data = order.get("date_created", None)
+            data = pd.to_datetime(data)
 
-            key = (produto, plataforma)
-
-            if key not in produtos:
-                produtos[key] = {
-                    "Produto": produto,
-                    "Plataforma": plataforma,
-                    "Quantidade": 0,
-                    "Faturamento": 0
-                }
-
-            produtos[key]["Quantidade"] += quantidade
-            produtos[key]["Faturamento"] += valor_total
+            lista.append({
+                "Produto": produto,
+                "Quantidade": quantidade,
+                "Faturamento": valor_total,
+                "Data": data
+            })
 
         except:
             continue
 
-    return pd.DataFrame(list(produtos.values()))
+    df = pd.DataFrame(lista)
 
+    # criar colunas de tempo
+    df["Dia"] = df["Data"].dt.date
+    df["Mes"] = df["Data"].dt.to_period("M").astype(str)
+    df["Ano"] = df["Data"].dt.year
 
-def exportar_excel(df):
-    os.makedirs("reports", exist_ok=True)
-
-    caminho = "reports/vendas.xlsx"
-
-    with pd.ExcelWriter(caminho, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Vendas")
-
-    return caminho
+    return df
