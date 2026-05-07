@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import pandas as pd
 
+os.makedirs("reports", exist_ok=True)
 load_dotenv()
 
 def buscar_dados():

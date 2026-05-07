@@ -1,6 +1,6 @@
 import streamlit as st
-from src.etl import buscar_dados
-from src.etl import buscar_dados, exportar_excel
+from etl import buscar_dados
+from etl import buscar_dados, exportar_excel
 
 st.set_page_config(page_title="Dashboard Ecommerce", layout="wide")
 
