@@ -1,12 +1,17 @@
 import requests
 import os
 import pandas as pd
-import streamlit as st
+from dotenv import load_dotenv
+from datetime import datetime
+
+load_dotenv()
+
+os.makedirs("reports", exist_ok=True)
 
 
 def buscar_dados():
-    ACCESS_TOKEN = st.secrets["ACCESS_TOKEN"]
-    USER_ID = st.secrets["USER_ID"]
+    ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+    USER_ID = os.getenv("USER_ID")
 
     url = f"https://api.mercadolibre.com/orders/search?seller={USER_ID}"
 
@@ -17,7 +22,7 @@ def buscar_dados():
     response = requests.get(url, headers=headers)
     dados = response.json()
 
-    lista = []
+    produtos = {}
 
     for order in dados.get("results", []):
         try:
@@ -27,25 +32,48 @@ def buscar_dados():
             quantidade = item["quantity"]
             valor_total = order["total_amount"]
 
-            # 📅 DATA DO PEDIDO
-            data = order.get("date_created", None)
-            data = pd.to_datetime(data)
+            # 📅 pega data do pedido
+            data = order.get("date_created", "")
+            data_obj = datetime.fromisoformat(data.replace("Z", ""))
 
-            lista.append({
-                "Produto": produto,
-                "Quantidade": quantidade,
-                "Faturamento": valor_total,
-                "Data": data
-            })
+            dia = data_obj.date()
+            mes = data_obj.month
+            ano = data_obj.year
+
+            if produto not in produtos:
+                produtos[produto] = {
+                    "Quantidade": 0,
+                    "Faturamento": 0,
+                    "Dia": dia,
+                    "Mes": mes,
+                    "Ano": ano
+                }
+
+            produtos[produto]["Quantidade"] += quantidade
+            produtos[produto]["Faturamento"] += valor_total
 
         except:
             continue
 
-    df = pd.DataFrame(lista)
+    lista = []
 
-    # criar colunas de tempo
-    df["Dia"] = df["Data"].dt.date
-    df["Mes"] = df["Data"].dt.to_period("M").astype(str)
-    df["Ano"] = df["Data"].dt.year
+    for p, d in produtos.items():
+        lista.append({
+            "Produto": p,
+            "Quantidade": d["Quantidade"],
+            "Faturamento": d["Faturamento"],
+            "Dia": d["Dia"],
+            "Mes": d["Mes"],
+            "Ano": d["Ano"]
+        })
 
-    return df
+    return pd.DataFrame(lista)
+
+
+def exportar_excel(df):
+    caminho = "reports/vendas.xlsx"
+
+    with pd.ExcelWriter(caminho, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Vendas", index=False)
+
+    return caminho

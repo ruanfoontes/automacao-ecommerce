@@ -7,6 +7,11 @@ st.title("📊 Dashboard Mercado Livre - Análise Temporal")
 
 df = buscar_dados()
 
+#SEGURANÇA 
+if df.empty or not {"Dia", "Mes", "Ano"}.issubset(df.columns):
+    st.warning("Dados insuficientes para análise temporal")
+    st.stop()
+
 if df.empty:
     st.warning("Nenhum dado encontrado")
     st.stop()
