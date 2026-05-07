@@ -6,6 +6,7 @@ st.set_page_config(page_title="Dashboard Ecommerce", layout="wide")
 st.title("📊 Dashboard Mercado Livre")
 
 df = buscar_dados()
+st.write(df)
 
 # segurança
 if df.empty:
