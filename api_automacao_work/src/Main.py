@@ -8,8 +8,8 @@ st.title("📊 Dashboard Mercado Livre")
 ACCESS_TOKEN = st.secrets["ACCESS_TOKEN"]
 USER_ID = st.secrets["USER_ID"]
 
-st.write("TOKEN:", ACCESS_TOKEN)
-st.write("USER:", USER_ID)
+st.write("TOKEN:", st.secrets.get("ACCESS_TOKEN"))
+st.write("USER:", st.secrets.get("USER_ID"))
 
 # puxar dados
 df = buscar_dados()
