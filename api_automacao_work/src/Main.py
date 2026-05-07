@@ -15,7 +15,7 @@ if not ACCESS_TOKEN or not USER_ID:
     st.error("Secrets não configurados no Streamlit Cloud")
     st.stop()
 
-df = buscar_dados(ACCESS_TOKEN, USER_ID)
+df = buscar_dados()
 
 if df is None or df.empty:
     st.warning("Nenhum dado retornado da API")
