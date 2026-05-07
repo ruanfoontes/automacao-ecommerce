@@ -1,26 +1,21 @@
 from dotenv import load_dotenv
 import os
 import requests
+import json
 
 load_dotenv()
 
-APP_ID = os.getenv("APP_ID")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+USER_ID = os.getenv("USER_ID")
 
-CODE = "TG-69fc9d3853fabf0001f3cc0a-3120483679"
+url = f"https://api.mercadolibre.com/orders/search?seller={USER_ID}"
 
-url = "https://api.mercadolibre.com/oauth/token"
-
-payload = {
-    "grant_type": "authorization_code",
-    "client_id": APP_ID,
-    "client_secret": CLIENT_SECRET,
-    "code": CODE,
-    "redirect_uri": "https://google.com"
+headers = {
+    "Authorization": f"Bearer {ACCESS_TOKEN}"
 }
 
-response = requests.post(url, data=payload)
+response = requests.get(url, headers=headers)
 
 dados = response.json()
 
-print(dados)
+print(json.dumps(dados, indent=4, ensure_ascii=False))
