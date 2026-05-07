@@ -5,23 +5,22 @@ st.set_page_config(page_title="Dashboard Ecommerce", layout="wide")
 
 st.title("📊 Dashboard Mercado Livre")
 
-ACCESS_TOKEN = st.secrets["ACCESS_TOKEN"]
-USER_ID = st.secrets["USER_ID"]
+ACCESS_TOKEN = st.secrets.get("ACCESS_TOKEN")
+USER_ID = st.secrets.get("USER_ID")
 
-st.write("TOKEN:", st.secrets.get("ACCESS_TOKEN"))
-st.write("USER:", st.secrets.get("USER_ID"))
+st.write("DEBUG TOKEN:", ACCESS_TOKEN)
+st.write("DEBUG USER:", USER_ID)
 
-# puxar dados
-df = buscar_dados()
+if not ACCESS_TOKEN or not USER_ID:
+    st.error("Secrets não configurados no Streamlit Cloud")
+    st.stop()
 
-st.write(df)
+df = buscar_dados(ACCESS_TOKEN, USER_ID)
 
-# proteção geral
 if df is None or df.empty:
     st.warning("Nenhum dado retornado da API")
     st.stop()
 
-# métricas
 col1, col2 = st.columns(2)
 
 col1.metric("Total Produtos", len(df))
@@ -29,13 +28,9 @@ col2.metric("Faturamento Total", f"R$ {df['Faturamento'].sum():.2f}")
 
 st.dataframe(df)
 
-# gráfico seguro
 if {"Produto", "Quantidade"}.issubset(df.columns):
     st.bar_chart(df.set_index("Produto")["Quantidade"])
-else:
-    st.warning("Sem dados para gráfico")
 
-# excel opcional
 if st.button("Gerar Excel"):
     arquivo = exportar_excel(df)
-    st.success("Excel gerado com sucesso!")
+    st.success(f"Excel gerado: {arquivo}")
