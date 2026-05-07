@@ -5,6 +5,9 @@ st.set_page_config(page_title="Dashboard Ecommerce", layout="wide")
 
 st.title("📊 Dashboard Mercado Livre")
 
+st.write("TOKEN:", ACCESS_TOKEN)
+st.write("USER:", USER_ID)
+
 # puxar dados
 df = buscar_dados()
 
