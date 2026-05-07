@@ -37,8 +37,6 @@ def buscar_dados():
         produtos[produto]["Quantidade"] += quantidade
         produtos[produto]["Faturamento"] += valor_total
 
-    import pandas as pd
-
     lista = []
     for p, d in produtos.items():
         lista.append({
@@ -47,7 +45,14 @@ def buscar_dados():
             "Faturamento": d["Faturamento"]
         })
 
-    return pd.DataFrame(lista)
+    df = pd.DataFrame(lista)
+  
+    #proteção contra api vazia
+    if df.empty:
+        return pd.DataFrame(columns=["Produto", "Quantidade", "Faturamento"])
+
+    return df
+
 
 def exportar_excel(df):
     caminho = "reports/vendas.xlsx"
@@ -55,4 +60,4 @@ def exportar_excel(df):
     with pd.ExcelWriter(caminho, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Produtos", index=False)
 
-    return caminho 
+    return caminho

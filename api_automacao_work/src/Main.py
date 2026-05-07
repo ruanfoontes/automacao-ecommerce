@@ -5,15 +5,17 @@ st.set_page_config(page_title="Dashboard Ecommerce", layout="wide")
 
 st.title("📊 Dashboard Mercado Livre")
 
+# puxar dados
 df = buscar_dados()
-
-# segurança
-if df.empty:
-    st.warning("Nenhum dado retornado da API")
-    st.stop()
 
 st.write(df)
 
+# proteção geral
+if df is None or df.empty:
+    st.warning("Nenhum dado retornado da API")
+    st.stop()
+
+# métricas
 col1, col2 = st.columns(2)
 
 col1.metric("Total Produtos", len(df))
@@ -25,9 +27,9 @@ st.dataframe(df)
 if {"Produto", "Quantidade"}.issubset(df.columns):
     st.bar_chart(df.set_index("Produto")["Quantidade"])
 else:
-    st.warning("Colunas do gráfico não encontradas")
+    st.warning("Sem dados para gráfico")
 
-# Excel
+# excel opcional
 if st.button("Gerar Excel"):
     arquivo = exportar_excel(df)
     st.success("Excel gerado com sucesso!")
