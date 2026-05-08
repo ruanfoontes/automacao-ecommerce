@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os
 from etl import buscar_dados, exportar_excel
 
 st.set_page_config(page_title="Dashboard Ecommerce", layout="wide")
