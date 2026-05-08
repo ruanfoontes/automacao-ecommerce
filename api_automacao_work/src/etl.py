@@ -27,8 +27,8 @@ def buscar_dados():
                 continue
 
             data_obj = datetime.fromisoformat(data_raw.replace("Z", ""))
-            if data_obj.year < 2022:
-                continue
+            #if data_obj.year < 2022:
+            #    continue
 
             vendas.append({
                 "Data": data_obj.strftime("%d/%m/%Y"),
