@@ -1,6 +1,5 @@
 import requests
 import os
-import streamlit as st
 import pandas as pd
 from datetime import datetime
 
@@ -14,40 +13,44 @@ def buscar_dados():
     ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
     USER_ID = os.getenv("USER_ID")
 
+    # Endpoint para buscar ordens do vendedor
     url = f"https://api.mercadolibre.com/orders/search?seller={USER_ID}"
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
 
     response = requests.get(url, headers=headers)
-    dados = response.json()
-    vendas = []
+    
+    # Verificação de erro da API
+    if response.status_code != 200:
+        return pd.DataFrame() # Retorna vazio se der erro no Token/Conexão
 
-    if "results" not in dados:
-        st.error(f"Erro da API do Mercado Livre: {dados}")
+    dados = response.json()
+    vendas_detalhadas = []
 
     for order in dados.get("results", []):
-        try:
-            data_raw = order.get("date_created")
-            if not data_raw:
+        for item in order.get("order_items", []):
+            try:
+                preco_unitario = float(item.get("unit_price", 0))
+                quantidade = int(item.get("quantity", 0))
+                subtotal = preco_unitario * quantidade
+
+                # Tratamento simples da data
+                data_api = order.get("date_created", "")
+                data_formatada = data_api[:10] if data_api else "N/A"
+
+                vendas_detalhadas.append({
+                    "ID_Pedido": order.get("id"),
+                    "Produto": item.get("item", {}).get("title"),
+                    "Preco_Unit": preco_unitario,
+                    "Quantidade": quantidade,
+                    "Faturamento_Item": subtotal,
+                    "Data": data_formatada
+                })
+            except Exception:
                 continue
 
-            data_obj = datetime.fromisoformat(data_raw.replace("Z", ""))
-            #if data_obj.year < 2022:
-            #    continue
-
-            vendas.append({
-                "Data": data_obj.strftime("%d/%m/%Y"),
-                "Ano": data_obj.year,
-                "Mes": data_obj.month,
-                "Dia": data_obj.day,
-                "Faturamento": float(order.get("total_amount", 0)),
-                "Pedidos": order.get("id")
-            })
-        except:
-            continue
-
-    return pd.DataFrame(vendas)
+    return pd.DataFrame(vendas_detalhadas)
 
 def exportar_excel(df):
-    caminho = "vendas.xlsx"
+    caminho = "vendas_detalhadas.xlsx"
     df.to_excel(caminho, index=False)
     return caminho
