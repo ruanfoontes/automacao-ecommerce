@@ -1,5 +1,6 @@
 import requests
 import os
+import streamlit as st
 import pandas as pd
 from datetime import datetime
 
@@ -19,6 +20,9 @@ def buscar_dados():
     response = requests.get(url, headers=headers)
     dados = response.json()
     vendas = []
+
+    if "results" not in dados:
+        st.error(f"Erro da API do Mercado Livre: {dados}")
 
     for order in dados.get("results", []):
         try:
