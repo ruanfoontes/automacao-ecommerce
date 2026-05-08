@@ -7,7 +7,11 @@ st.title("📊 Dashboard Mercado Livre - Real")
 
 df = buscar_dados()
 
+st.write(f"Token configurado: {'Sim' if os.getenv('ACCESS_TOKEN') else 'Não'}")
+st.write(f"Linhas encontradas no DataFrame: {len(df)}")
+
 if df.empty:
+
     st.error("⚠️ Nenhum dado encontrado. Verifique seu Token e ID no Secrets.")
     st.stop()
 
