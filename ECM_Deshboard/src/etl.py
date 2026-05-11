@@ -1,42 +1,31 @@
-import requests
-import os
 import pandas as pd
-from dotenv import load_dotenv
 
-load_dotenv()
+from meli_export import buscar_extrato_meli
 
-def buscar_dados_meli():
-    token = os.getenv("ACCESS_TOKEN")
-    user_id = os.getenv("USER_ID")
-    
-    # URL para buscar as ordens recentes
-    url = f"https://api.mercadolibre.com/orders/search?seller={user_id}&limit=50"
-    headers = {"Authorization": f"Bearer {token}"}
+from meli_auth import ensure_dotenv_loaded
 
+ensure_dotenv_loaded()
+
+
+def buscar_dados_meli(*, limit: int = 50, max_pages: int = 1):
+    """
+    Compativel com dashboard antigo: colunas Data, Produto, Preco_Unitario, Quantidade, ID_Ordem.
+    Dados vêm do mesmo extrato ML (orders/search) que meli_export.
+    """
     try:
-        response = requests.get(url, headers=headers)
-        if response.status_code != 200:
-            return pd.DataFrame(), f"Erro API: {response.status_code}"
-        
-        dados = response.json()
-        vendas_brutas = []
-
-        for order in dados.get("results", []):
-            for item in order.get("order_items", []):
-                preco = float(item.get("unit_price", 0))
-                qtd = int(item.get("quantity", 0))
-                
-                vendas_brutas.append({
-                    "Data": order.get("date_created")[:10],
-                    "Produto": item.get("item", {}).get("title"),
-                    "Preco_Unitario": preco,
-                    "Quantidade": qtd,
-                    # O cálculo de faturamento será feito no DataFrame
-                    "ID_Ordem": order.get("id")
-                })
-        
-        df = pd.DataFrame(vendas_brutas)
-        return df, "Sucesso"
-    
+        df, msg = buscar_extrato_meli(limit=limit, max_pages=max_pages)
+        if df.empty:
+            return df, msg
+        legado = df.rename(
+            columns={
+                "data_pedido": "Data",
+                "produto": "Produto",
+                "preco_unitario": "Preco_Unitario",
+                "quantidade": "Quantidade",
+                "id_pedido": "ID_Ordem",
+            }
+        )
+        cols = ["Data", "Produto", "Preco_Unitario", "Quantidade", "ID_Ordem"]
+        return legado[cols], msg
     except Exception as e:
         return pd.DataFrame(), str(e)
